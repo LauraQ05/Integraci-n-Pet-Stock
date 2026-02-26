@@ -9,41 +9,58 @@ import Sidebar from './components/Sidebar';
 import CustomButton from './components/CustomButton'; 
 import SuccessModal from './components/SuccessModal';
 
-/**
- * Componente principal Pet Stock.
- * Implementa la lógica de negocio y estados globales.
- */
 function App() {
-  // Estado para el cliente
+  // --- 1. ESTADOS (Deben estar adentro de la función App) ---
   const [cliente, setCliente] = useState({ cedula: '', nombre: '', correo: '', telefono: '' });
-  
-  // Estado para la lista dinámica de artículos
   const [articulos, setArticulos] = useState([{ id: Date.now(), nombre: '', precio: 0 }]);
-  
-  // Booleano para el renderizado condicional de domicilio
   const [usaDomicilio, setUsaDomicilio] = useState(false);
-  
-  // Estado para mostrar/ocultar el modal de éxito
   const [showModal, setShowModal] = useState(false);
 
-  const handleProcesarVenta = (e) => {
+  // --- 2. LÓGICA DE INTEGRACIÓN (También adentro de App) ---
+  const handleProcesarVenta = async (e) => {
     e.preventDefault();
-    setShowModal(true); 
+
+    // Calculamos el total
+    const totalArticulos = articulos.reduce((acc, art) => acc + parseFloat(art.precio || 0), 0);
+    const totalFinal = usaDomicilio ? totalArticulos + 10000 : totalArticulos;
+
+    const datosVenta = {
+      cliente: {
+        nombre: cliente.nombre,
+        cedula: cliente.cedula
+      },
+      total: totalFinal
+    };
+
+    try {
+      // Verifica que diga http, no https. Y que el puerto sea 5000.
+       const respuesta = await fetch('http://localhost:5001/api/procesar-compra', { 
+      method: 'POST',
+       headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(datosVenta),
+      });
+
+      if (respuesta.ok) {
+        setShowModal(true); // Ahora sí encontrará setShowModal porque está en el mismo nivel
+      } else {
+        alert("Error al guardar en la base de datos.");
+      }
+    } catch (error) {
+      console.error("Error de conexión:", error);
+      alert("Asegúrate de que el Backend esté corriendo en el puerto 5000");
+    }
   };
 
+  // --- 3. RENDERIZADO ---
   return (
     <div className="app-container">
       <Sidebar />
       <main className="main-content">
         <Header />
         <form onSubmit={handleProcesarVenta}>
-          {/* Componente de Datos Personales */}
           <ClienteForm cliente={cliente} setCliente={setCliente} />
-
-          {/* Componente de Artículos Dinámicos */}
           <ArticulosContainer articulos={articulos} setArticulos={setArticulos} />
 
-          {/* Checkbox para Domicilio */}
           <div className="domicilio-box">
             <label className="checkbox-container">
               <input 
@@ -55,10 +72,7 @@ function App() {
             </label>
           </div>
 
-          {/* Renderizado Condicional del Componente DomicilioSection */}
           {usaDomicilio && <DomicilioSection />}
-
-          {/* Componente de Cálculo en tiempo real */}
           <ResumenCompra articulos={articulos} tieneDomicilio={usaDomicilio} />
 
           <div className="form-actions">
@@ -69,10 +83,9 @@ function App() {
         </form>
       </main>
 
-      {/* Alerta de confirmación */}
       {showModal && <SuccessModal close={() => setShowModal(false)} nombre={cliente.nombre} />}
     </div>
   );
-}
+} 
 
 export default App;
