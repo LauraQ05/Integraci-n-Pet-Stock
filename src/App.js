@@ -10,13 +10,13 @@ import CustomButton from './components/CustomButton';
 import SuccessModal from './components/SuccessModal';
 
 function App() {
-  // --- 1. ESTADOS (Deben estar adentro de la función App) ---
+  // --- 1. ESTADOS ---
   const [cliente, setCliente] = useState({ cedula: '', nombre: '', correo: '', telefono: '' });
   const [articulos, setArticulos] = useState([{ id: Date.now(), nombre: '', precio: 0 }]);
   const [usaDomicilio, setUsaDomicilio] = useState(false);
   const [showModal, setShowModal] = useState(false);
 
-  // --- 2. LÓGICA DE INTEGRACIÓN (También adentro de App) ---
+  // --- 2. LÓGICA DE INTEGRACIÓN  ---
   const handleProcesarVenta = async (e) => {
     e.preventDefault();
 
@@ -33,7 +33,6 @@ function App() {
     };
 
     try {
-      // Verifica que diga http, no https. Y que el puerto sea 5000.
        const respuesta = await fetch('http://localhost:5001/api/procesar-compra', { 
       method: 'POST',
        headers: { 'Content-Type': 'application/json' },
@@ -41,7 +40,7 @@ function App() {
       });
 
       if (respuesta.ok) {
-        setShowModal(true); // Ahora sí encontrará setShowModal porque está en el mismo nivel
+        setShowModal(true);
       } else {
         alert("Error al guardar en la base de datos.");
       }
